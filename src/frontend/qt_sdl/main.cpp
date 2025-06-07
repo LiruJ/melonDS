@@ -399,11 +399,6 @@ int main(int argc, char** argv)
 
 	SDL_Quit();
 
-	if (server) 
-	{
-		delete server;
-		server = nullptr;
-	}
 	return ret;
 }
 
