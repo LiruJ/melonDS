@@ -171,6 +171,14 @@ EmuInstance::~EmuInstance()
     }
 }
 
+bool EmuInstance::ConnectToServer(const wchar_t* pipeName)
+{
+    if (nullptr == emuThread)
+        return false;
+
+    return emuThread->ConnectToServer(pipeName);
+}
+
 
 std::string EmuInstance::instanceFileSuffix()
 {

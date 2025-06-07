@@ -19,6 +19,8 @@ namespace cucumberDS
 
 		unsigned int SendData();
 
+		unsigned int GetCurrentOutputSize() const { return currentOutputOffset; }
+
 		bool GetIsBroken() const { return isBroken; }
 		wchar_t* GetName() const { return name; }
 	private:

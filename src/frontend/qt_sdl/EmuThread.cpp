@@ -52,6 +52,8 @@
 #include "GPU3D_OpenGL.h"
 #include "GPU3D_Compute.h"
 
+#include "cucumber/FrameOutputMessage.h"
+
 #include "Savestate.h"
 
 #include "EmuInstance.h"
@@ -66,6 +68,15 @@ EmuThread::EmuThread(EmuInstance* inst, QObject* parent) : QThread(parent)
     emuStatus = emuStatus_Paused;
     emuPauseStack = emuPauseStackRunning;
     emuActive = false;
+}
+
+EmuThread::~EmuThread()
+{
+    if (serverConnection)
+    {
+        delete serverConnection;
+        serverConnection = nullptr;
+    }
 }
 
 void EmuThread::attachWindow(MainWindow* window)
@@ -102,6 +113,13 @@ void EmuThread::detachWindow(MainWindow* window)
         disconnect(this, SIGNAL(windowLimitFPSChange()), window->actLimitFramerate, SLOT(trigger()));
         disconnect(this, SIGNAL(swapScreensToggle()), window->actScreenSwap, SLOT(trigger()));
     }
+}
+
+bool EmuThread::ConnectToServer(const wchar_t* pipeName)
+{
+    serverConnection = new cucumberDS::ServerConnectionManager(pipeName);
+    printf("Awaiting connection to server\n");
+    return server->Initialise();
 }
 
 void EmuThread::run()
@@ -153,6 +171,10 @@ void EmuThread::run()
 
     while (emuStatus != emuStatus_Exit)
     {
+        // TODO: Read from the server here.
+        // if (serverConnection)
+        
+
         MPInterface::Get().Process();
         emuInstance->inputProcess();
 
@@ -331,6 +353,15 @@ void EmuThread::run()
                 emuInstance->drawScreenGL();
             }
 
+            // Send screen data through pipe.
+            cucumberDS::FrameOutputMessage* frameMessage =
+                (cucumberDS::FrameOutputMessage*)serverConnection->GetOutputMessage(FRAME_OUTPUT_MESSAGE_ID);
+            if (frameMessage && emuInstance->nds->GPU.Framebuffer[frontBuffer][0] && emuInstance->nds->GPU.Framebuffer[frontBuffer][1])
+            {
+                frameMessage->Write(emuInstance->nds->GPU.Framebuffer[frontBuffer][0].get(), 0);
+                frameMessage->Write(emuInstance->nds->GPU.Framebuffer[frontBuffer][1].get(), 1);
+            }
+
 #ifdef MELONCAP
             MelonCap::Update();
 #endif // MELONCAP
@@ -458,6 +489,9 @@ void EmuThread::run()
                 emuInstance->drawScreenGL();
             }
         }
+
+        printf("Sending %d bytes to server\n", serverConnection->GetCurrentOutputSize());
+        serverConnection->Send();
 
         handleMessages();
     }

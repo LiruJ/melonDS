@@ -81,6 +81,8 @@ public:
     EmuInstance(int inst);
     ~EmuInstance();
 
+    bool ConnectToServer(const wchar_t* pipeName);
+
     int getInstanceID() { return instanceID; }
     int getConsoleType() { return consoleType; }
     EmuThread* getEmuThread() { return emuThread; }

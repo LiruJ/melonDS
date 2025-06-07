@@ -33,6 +33,8 @@
 #include "NDSCart.h"
 #include "GBACart.h"
 
+#include "cucumber/ServerConnectionManager.h"
+
 namespace melonDS
 {
 class NDS;
@@ -49,9 +51,12 @@ class EmuThread : public QThread
 
 public:
     explicit EmuThread(EmuInstance* inst, QObject* parent = nullptr);
+    ~EmuThread();
 
     void attachWindow(MainWindow* window);
     void detachWindow(MainWindow* window);
+
+    bool ConnectToServer(const wchar_t* pipeName);
 
     enum MessageType
     {
@@ -173,6 +178,8 @@ private:
     EmuStatusKind prevEmuStatus;
     EmuStatusKind emuStatus;
     bool emuActive;
+
+    cucumberDS::ServerConnectionManager* serverConnection = nullptr;
 
     constexpr static int emuPauseStackRunning = 0;
     constexpr static int emuPauseStackPauseThreshold = 1;

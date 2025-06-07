@@ -18,6 +18,8 @@ namespace cucumberDS
 		PipeMessage* GetInputMessage(unsigned char id) { return inputMessages.at(id); }
 		PipeMessage* GetOutputMessage(unsigned char id) { return outputMessages.at(id); }
 
+		unsigned int GetCurrentOutputSize() const { return pipeConnection->GetCurrentOutputSize(); }
+
 		void Send();
 	private:
 		PipeConnection* pipeConnection = nullptr;
