@@ -44,6 +44,11 @@ set(SOURCES_QT_SDL
     ArchiveUtil.h
     ArchiveUtil.cpp
 
+    ../cucumber/ServerConnectionManager.cpp
+    ../cucumber/PipeConnection.cpp
+    ../cucumber/PipeMessage.cpp
+    ../cucumber/FrameOutputMessage.cpp
+
     ../ScreenLayout.cpp
     ../mic_blow.h
 
