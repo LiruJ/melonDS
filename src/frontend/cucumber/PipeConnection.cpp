@@ -35,7 +35,7 @@ cucumberDS::PipeConnection::~PipeConnection()
 	}
 	if (outputBuffer)
 	{
-		delete[maximumOutputBufferSize] outputBuffer;
+		delete[] outputBuffer;
 		outputBuffer = nullptr;
 	}
 }
