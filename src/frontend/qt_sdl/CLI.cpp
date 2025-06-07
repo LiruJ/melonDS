@@ -38,6 +38,7 @@ CommandLineOptions* ManageArgs(QApplication& melon)
     QCommandLineParser parser;
     parser.addHelpOption();
 
+    parser.addPositionalArgument("pipe", "The name of the pipe");
     parser.addPositionalArgument("nds", "Nintendo DS ROM (or an archive file which contains it) to load into Slot-1");
     parser.addPositionalArgument("gba", "GBA ROM (or an archive file which contains it) to load into Slot-2");
 
@@ -59,11 +60,13 @@ CommandLineOptions* ManageArgs(QApplication& melon)
     switch (posargs.size())
     {
         default:
-            Log(LogLevel::Warn, "Too many positional arguments; ignoring 3 onwards\n");
+            Log(LogLevel::Warn, "Too many positional arguments; ignoring 4 onwards\n");
+        case 3:
+            options->gbaRomPath = posargs[3];
         case 2:
-            options->gbaRomPath = posargs[1];
+            options->dsRomPath = posargs[2];
         case 1:
-            options->dsRomPath = posargs[0];
+            options->pipeName = posargs[0];
         case 0:
             break;
     }

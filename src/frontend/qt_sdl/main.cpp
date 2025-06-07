@@ -1,19 +1,19 @@
 /*
-    Copyright 2016-2025 melonDS team
+	Copyright 2016-2025 melonDS team
 
-    This file is part of melonDS.
+	This file is part of melonDS.
 
-    melonDS is free software: you can redistribute it and/or modify it under
-    the terms of the GNU General Public License as published by the Free
-    Software Foundation, either version 3 of the License, or (at your option)
-    any later version.
+	melonDS is free software: you can redistribute it and/or modify it under
+	the terms of the GNU General Public License as published by the Free
+	Software Foundation, either version 3 of the License, or (at your option)
+	any later version.
 
-    melonDS is distributed in the hope that it will be useful, but WITHOUT ANY
-    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-    FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+	melonDS is distributed in the hope that it will be useful, but WITHOUT ANY
+	WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+	FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License along
-    with melonDS. If not, see http://www.gnu.org/licenses/.
+	You should have received a copy of the GNU General Public License along
+	with melonDS. If not, see http://www.gnu.org/licenses/.
 */
 
 #include <stdlib.h>
@@ -48,6 +48,8 @@
 #endif
 
 #include <SDL2/SDL.h>
+
+#include "cucumber/ServerConnectionManager.h"
 
 #include "OpenGLSupport.h"
 #include "duckstation/gl/context.h"
@@ -90,312 +92,323 @@ QElapsedTimer sysTimer;
 
 void NetInit()
 {
-    Config::Table cfg = Config::GetGlobalTable();
-    if (cfg.GetBool("LAN.DirectMode"))
-    {
-        if (!pcap)
-            pcap = LibPCap::New();
+	Config::Table cfg = Config::GetGlobalTable();
+	if (cfg.GetBool("LAN.DirectMode"))
+	{
+		if (!pcap)
+			pcap = LibPCap::New();
 
-        if (pcap)
-        {
-            std::string devicename = cfg.GetString("LAN.Device");
-            std::unique_ptr<Net_PCap> netPcap = pcap->Open(devicename, [](const u8* data, int len) {
-                net.RXEnqueue(data, len);
-            });
+		if (pcap)
+		{
+			std::string devicename = cfg.GetString("LAN.Device");
+			std::unique_ptr<Net_PCap> netPcap = pcap->Open(devicename, [](const u8* data, int len) {
+				net.RXEnqueue(data, len);
+				});
 
-            if (netPcap)
-            {
-                net.SetDriver(std::move(netPcap));
-            }
-        }
-    }
-    else
-    {
-        net.SetDriver(std::make_unique<Net_Slirp>([](const u8* data, int len) {
-            net.RXEnqueue(data, len);
-        }));
-    }
+			if (netPcap)
+			{
+				net.SetDriver(std::move(netPcap));
+			}
+		}
+	}
+	else
+	{
+		net.SetDriver(std::make_unique<Net_Slirp>([](const u8* data, int len) {
+			net.RXEnqueue(data, len);
+			}));
+	}
 }
 
 
 bool createEmuInstance()
 {
-    int id = -1;
-    for (int i = 0; i < kMaxEmuInstances; i++)
-    {
-        if (!emuInstances[i])
-        {
-            id = i;
-            break;
-        }
-    }
+	int id = -1;
+	for (int i = 0; i < kMaxEmuInstances; i++)
+	{
+		if (!emuInstances[i])
+		{
+			id = i;
+			break;
+		}
+	}
 
-    if (id == -1)
-        return false;
+	if (id == -1)
+		return false;
 
-    auto inst = new EmuInstance(id);
-    emuInstances[id] = inst;
+	auto inst = new EmuInstance(id);
+	emuInstances[id] = inst;
 
-    return true;
+	return true;
 }
 
 void deleteEmuInstance(int id)
 {
-    auto inst = emuInstances[id];
-    if (!inst) return;
+	auto inst = emuInstances[id];
+	if (!inst) return;
 
-    delete inst;
-    emuInstances[id] = nullptr;
+	delete inst;
+	emuInstances[id] = nullptr;
 }
 
 void deleteAllEmuInstances(int first)
 {
-    for (int i = first; i < kMaxEmuInstances; i++)
-        deleteEmuInstance(i);
+	for (int i = first; i < kMaxEmuInstances; i++)
+		deleteEmuInstance(i);
 }
 
 int numEmuInstances()
 {
-    int ret = 0;
+	int ret = 0;
 
-    for (int i = 0; i < kMaxEmuInstances; i++)
-    {
-        if (emuInstances[i])
-            ret++;
-    }
+	for (int i = 0; i < kMaxEmuInstances; i++)
+	{
+		if (emuInstances[i])
+			ret++;
+	}
 
-    return ret;
+	return ret;
 }
 
 
 void broadcastInstanceCommand(int cmd, QVariant& param, int sourceinst)
 {
-    for (int i = 0; i < kMaxEmuInstances; i++)
-    {
-        if (i == sourceinst) continue;
-        if (!emuInstances[i]) continue;
+	for (int i = 0; i < kMaxEmuInstances; i++)
+	{
+		if (i == sourceinst) continue;
+		if (!emuInstances[i]) continue;
 
-        emuInstances[i]->handleCommand(cmd, param);
-    }
+		emuInstances[i]->handleCommand(cmd, param);
+	}
 }
 
 
 void pathInit()
 {
-    // First, check for the portable directory next to the executable.
-    QString appdirpath = QCoreApplication::applicationDirPath();
-    QString portablepath = appdirpath + QDir::separator() + "portable";
+	// First, check for the portable directory next to the executable.
+	QString appdirpath = QCoreApplication::applicationDirPath();
+	QString portablepath = appdirpath + QDir::separator() + "portable";
 
 #if defined(__APPLE__)
-    // On Apple platforms we may need to navigate outside an app bundle.
-    // The executable directory would be "melonDS.app/Contents/MacOS", so we need to go a total of three steps up.
-    QDir bundledir(appdirpath);
-    if (bundledir.cd("..") && bundledir.cd("..") && bundledir.dirName().endsWith(".app") && bundledir.cd(".."))
-    {
-        portablepath = bundledir.absolutePath() + QDir::separator() + "portable";
-    }
+	// On Apple platforms we may need to navigate outside an app bundle.
+	// The executable directory would be "melonDS.app/Contents/MacOS", so we need to go a total of three steps up.
+	QDir bundledir(appdirpath);
+	if (bundledir.cd("..") && bundledir.cd("..") && bundledir.dirName().endsWith(".app") && bundledir.cd(".."))
+	{
+		portablepath = bundledir.absolutePath() + QDir::separator() + "portable";
+	}
 #endif
 
-    QDir portabledir(portablepath);
-    if (portabledir.exists())
-    {
-        emuDirectory = portabledir.absolutePath();
-    }
-    else
-    {
-        // If no overrides are specified, use the default path.
+	QDir portabledir(portablepath);
+	if (portabledir.exists())
+	{
+		emuDirectory = portabledir.absolutePath();
+	}
+	else
+	{
+		// If no overrides are specified, use the default path.
 #if defined(__WIN32__) && defined(WIN32_PORTABLE)
-        emuDirectory = appdirpath;
+		emuDirectory = appdirpath;
 #else
-        QString confdir;
-        QDir config(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
-        config.mkdir("melonDS");
-        confdir = config.absolutePath() + QDir::separator() + "melonDS";
-        emuDirectory = confdir;
+		QString confdir;
+		QDir config(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
+		config.mkdir("melonDS");
+		confdir = config.absolutePath() + QDir::separator() + "melonDS";
+		emuDirectory = confdir;
 #endif
-    }
+	}
 }
 
 
 void setMPInterface(MPInterfaceType type)
 {
-    // switch to the requested MP interface
-    MPInterface::Set(type);
+	// switch to the requested MP interface
+	MPInterface::Set(type);
 
-    // set receive timeout
-    // TODO: different settings per interface?
-    MPInterface::Get().SetRecvTimeout(Config::GetGlobalTable().GetInt("MP.RecvTimeout"));
+	// set receive timeout
+	// TODO: different settings per interface?
+	MPInterface::Get().SetRecvTimeout(Config::GetGlobalTable().GetInt("MP.RecvTimeout"));
 
-    // update UI appropriately
-    // TODO: decide how to deal with multi-window when it becomes a thing
-    for (int i = 0; i < kMaxEmuInstances; i++)
-    {
-        EmuInstance* inst = emuInstances[i];
-        if (!inst) continue;
+	// update UI appropriately
+	// TODO: decide how to deal with multi-window when it becomes a thing
+	for (int i = 0; i < kMaxEmuInstances; i++)
+	{
+		EmuInstance* inst = emuInstances[i];
+		if (!inst) continue;
 
-        MainWindow* win = inst->getMainWindow();
-        if (win) win->updateMPInterface(type);
-    }
+		MainWindow* win = inst->getMainWindow();
+		if (win) win->updateMPInterface(type);
+	}
 }
 
 
 
 MelonApplication::MelonApplication(int& argc, char** argv)
-    : QApplication(argc, argv)
+	: QApplication(argc, argv)
 {
 #if !defined(Q_OS_APPLE)
-    setWindowIcon(QIcon(":/melon-icon"));
-    #if defined(Q_OS_UNIX)
-        setDesktopFileName(QString("net.kuribo64.melonDS"));
-    #endif
+	setWindowIcon(QIcon(":/melon-icon"));
+#if defined(Q_OS_UNIX)
+	setDesktopFileName(QString("net.kuribo64.melonDS"));
+#endif
 #endif
 }
 
 // TODO: ROM loading should be moved to EmuInstance
 // especially so the preloading below and in main() can be done in a nicer fashion
 
-bool MelonApplication::event(QEvent *event)
+bool MelonApplication::event(QEvent* event)
 {
-    if (event->type() == QEvent::FileOpen)
-    {
-        EmuInstance* inst = emuInstances[0];
-        MainWindow* win = inst->getMainWindow();
-        QFileOpenEvent *openEvent = static_cast<QFileOpenEvent*>(event);
+	if (event->type() == QEvent::FileOpen)
+	{
+		EmuInstance* inst = emuInstances[0];
+		MainWindow* win = inst->getMainWindow();
+		QFileOpenEvent* openEvent = static_cast<QFileOpenEvent*>(event);
 
-        const QStringList file = win->splitArchivePath(openEvent->file(), true);
-        win->preloadROMs(file, {}, true);
-    }
+		const QStringList file = win->splitArchivePath(openEvent->file(), true);
+		win->preloadROMs(file, {}, true);
+	}
 
-    return QApplication::event(event);
+	return QApplication::event(event);
 }
 
 int main(int argc, char** argv)
 {
-    sysTimer.start();
-    srand(time(nullptr));
+	sysTimer.start();
+	srand(time(nullptr));
 
-    for (int i = 0; i < kMaxEmuInstances; i++)
-        emuInstances[i] = nullptr;
+	for (int i = 0; i < kMaxEmuInstances; i++)
+		emuInstances[i] = nullptr;
 
-    qputenv("QT_SCALE_FACTOR", "1");
+	qputenv("QT_SCALE_FACTOR", "1");
 
 #if QT_VERSION_MAJOR == 6 && defined(__WIN32__)
-    // Allow using the system dark theme palette on Windows
-    qputenv("QT_QPA_PLATFORM", "windows:darkmode=2");
+	// Allow using the system dark theme palette on Windows
+	qputenv("QT_QPA_PLATFORM", "windows:darkmode=2");
 #endif
 
-    printf("melonDS " MELONDS_VERSION "\n");
-    printf(MELONDS_URL "\n");
+	printf("melonDS " MELONDS_VERSION "\n");
+	printf("cucumberDS " MELONDS_VERSION "\n");
+	printf(MELONDS_URL "\n");
 
-    // easter egg - not worth checking other cases for something so dumb
-    if (argc != 0 && (!strcasecmp(argv[0], "derpDS") || !strcasecmp(argv[0], "./derpDS")))
-        printf("did you just call me a derp???\n");
+	// easter egg - not worth checking other cases for something so dumb
+	if (argc != 0 && (!strcasecmp(argv[0], "derpDS") || !strcasecmp(argv[0], "./derpDS")))
+		printf("did you just call me a derp???\n");
 
-    MelonApplication melon(argc, argv);
-    pathInit();
+	MelonApplication melon(argc, argv);
+	pathInit();
 
-    CLI::CommandLineOptions* options = CLI::ManageArgs(melon);
+	CLI::CommandLineOptions* options = CLI::ManageArgs(melon);
 
-    // http://stackoverflow.com/questions/14543333/joystick-wont-work-using-sdl
-    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+	cucumberDS::ServerConnectionManager* server = new cucumberDS::ServerConnectionManager(options->pipeName.toStdWString().c_str());
+	if (!server->Initialise())
+		return -420;
 
-    SDL_SetHint(SDL_HINT_APP_NAME, "melonDS");
+	// http://stackoverflow.com/questions/14543333/joystick-wont-work-using-sdl
+	SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
-    if (SDL_Init(SDL_INIT_HAPTIC) < 0)
-    {
-        printf("SDL couldn't init rumble\n");
-    }
-    if (SDL_Init(SDL_INIT_JOYSTICK) < 0)
-    {
-        printf("SDL couldn't init joystick\n");
-    }
-    if (SDL_Init(SDL_INIT_AUDIO) < 0)
-    {
-        const char* err = SDL_GetError();
-        QString errorStr = "Failed to initialize SDL. This could indicate an issue with your audio driver.\n\nThe error was: ";
-        errorStr += err;
+	SDL_SetHint(SDL_HINT_APP_NAME, "melonDS");
 
-        QMessageBox::critical(nullptr, "melonDS", errorStr);
-        return 1;
-    }
+	if (SDL_Init(SDL_INIT_HAPTIC) < 0)
+	{
+		printf("SDL couldn't init rumble\n");
+	}
+	if (SDL_Init(SDL_INIT_JOYSTICK) < 0)
+	{
+		printf("SDL couldn't init joystick\n");
+	}
+	if (SDL_Init(SDL_INIT_AUDIO) < 0)
+	{
+		const char* err = SDL_GetError();
+		QString errorStr = "Failed to initialize SDL. This could indicate an issue with your audio driver.\n\nThe error was: ";
+		errorStr += err;
 
-    SDL_JoystickEventState(SDL_ENABLE);
+		QMessageBox::critical(nullptr, "melonDS", errorStr);
+		return 1;
+	}
 
-    SDL_InitSubSystem(SDL_INIT_VIDEO);
-    SDL_EnableScreenSaver(); SDL_DisableScreenSaver();
+	SDL_JoystickEventState(SDL_ENABLE);
 
-    if (!Config::Load())
-        QMessageBox::critical(nullptr,
-                              "melonDS",
-                              "Unable to write to config.\nPlease check the write permissions of the folder you placed melonDS in.");
+	SDL_InitSubSystem(SDL_INIT_VIDEO);
+	SDL_EnableScreenSaver(); SDL_DisableScreenSaver();
 
-    camStarted[0] = false;
-    camStarted[1] = false;
-    camManager[0] = new CameraManager(0, 640, 480, true);
-    camManager[1] = new CameraManager(1, 640, 480, true);
+	if (!Config::Load())
+		QMessageBox::critical(nullptr,
+			"melonDS",
+			"Unable to write to config.\nPlease check the write permissions of the folder you placed melonDS in.");
 
-    systemThemeName = new QString(QApplication::style()->objectName());
+	camStarted[0] = false;
+	camStarted[1] = false;
+	camManager[0] = new CameraManager(0, 640, 480, true);
+	camManager[1] = new CameraManager(1, 640, 480, true);
 
-    {
-        Config::Table cfg = Config::GetGlobalTable();
-        QString uitheme = cfg.GetQString("UITheme");
-        if (!uitheme.isEmpty())
-        {
-            QApplication::setStyle(uitheme);
-        }
-    }
+	systemThemeName = new QString(QApplication::style()->objectName());
 
-    // default MP interface type is local MP
-    // this will be changed if a LAN or netplay session is initiated
-    setMPInterface(MPInterface_Local);
+	{
+		Config::Table cfg = Config::GetGlobalTable();
+		QString uitheme = cfg.GetQString("UITheme");
+		if (!uitheme.isEmpty())
+		{
+			QApplication::setStyle(uitheme);
+		}
+	}
 
-    NetInit();
+	// default MP interface type is local MP
+	// this will be changed if a LAN or netplay session is initiated
+	setMPInterface(MPInterface_Local);
 
-    createEmuInstance();
+	NetInit();
 
-    {
-        MainWindow* win = emuInstances[0]->getMainWindow();
-        bool memberSyntaxUsed = false;
-        const auto prepareRomPath = [&](const std::optional<QString> &romPath,
-                                        const std::optional<QString> &romArchivePath) -> QStringList
-        {
-            if (!romPath.has_value())
-                return {};
+	createEmuInstance();
 
-            if (romArchivePath.has_value())
-                return {*romPath, *romArchivePath};
+	{
+		MainWindow* win = emuInstances[0]->getMainWindow();
+		bool memberSyntaxUsed = false;
+		const auto prepareRomPath = [&](const std::optional<QString>& romPath,
+			const std::optional<QString>& romArchivePath) -> QStringList
+			{
+				if (!romPath.has_value())
+					return {};
 
-            const QStringList path = win->splitArchivePath(*romPath, true);
-            if (path.size() > 1) memberSyntaxUsed = true;
-            return path;
-        };
+				if (romArchivePath.has_value())
+					return { *romPath, *romArchivePath };
 
-        const QStringList dsfile = prepareRomPath(options->dsRomPath, options->dsRomArchivePath);
-        const QStringList gbafile = prepareRomPath(options->gbaRomPath, options->gbaRomArchivePath);
+				const QStringList path = win->splitArchivePath(*romPath, true);
+				if (path.size() > 1) memberSyntaxUsed = true;
+				return path;
+			};
 
-        if (memberSyntaxUsed) printf("Warning: use the a.zip|b.nds format at your own risk!\n");
+		const QStringList dsfile = prepareRomPath(options->dsRomPath, options->dsRomArchivePath);
+		const QStringList gbafile = prepareRomPath(options->gbaRomPath, options->gbaRomArchivePath);
 
-        win->preloadROMs(dsfile, gbafile, options->boot);
+		if (memberSyntaxUsed) printf("Warning: use the a.zip|b.nds format at your own risk!\n");
 
-        if (options->fullscreen)
-            win->toggleFullscreen();
-    }
+		win->preloadROMs(dsfile, gbafile, options->boot);
 
-    int ret = melon.exec();
+		if (options->fullscreen)
+			win->toggleFullscreen();
+	}
 
-    delete options;
+	int ret = melon.exec();
 
-    // if we get here, all the existing emu instances should have been deleted already
-    // but with this we make extra sure they are all deleted
-    deleteAllEmuInstances();
+	delete options;
 
-    delete camManager[0];
-    delete camManager[1];
+	// if we get here, all the existing emu instances should have been deleted already
+	// but with this we make extra sure they are all deleted
+	deleteAllEmuInstances();
 
-    Config::Save();
+	delete camManager[0];
+	delete camManager[1];
 
-    SDL_Quit();
-    return ret;
+	Config::Save();
+
+	SDL_Quit();
+
+	if (server) 
+	{
+		delete server;
+		server = nullptr;
+	}
+	return ret;
 }
 
 #ifdef __WIN32__
@@ -404,17 +417,17 @@ int main(int argc, char** argv)
 
 int CALLBACK WinMain(HINSTANCE hinst, HINSTANCE hprev, LPSTR cmdline, int cmdshow)
 {
-    if (AttachConsole(ATTACH_PARENT_PROCESS) && GetStdHandle(STD_OUTPUT_HANDLE))
-    {
-        freopen("CONOUT$", "w", stdout);
-        freopen("CONOUT$", "w", stderr);
-    }
+	if (AttachConsole(ATTACH_PARENT_PROCESS) && GetStdHandle(STD_OUTPUT_HANDLE))
+	{
+		freopen("CONOUT$", "w", stdout);
+		freopen("CONOUT$", "w", stderr);
+	}
 
-    int ret = main(__argc, __argv);
+	int ret = main(__argc, __argv);
 
-    printf("\n\n>");
+	printf("\n\n>");
 
-    return ret;
+	return ret;
 }
 
 #endif

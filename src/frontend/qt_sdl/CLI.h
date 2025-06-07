@@ -28,6 +28,7 @@ namespace CLI {
 
 struct CommandLineOptions
 {
+    QString pipeName;
     std::optional<QString> dsRomPath;
     std::optional<QString> dsRomArchivePath;
     std::optional<QString> gbaRomPath;
