@@ -119,7 +119,7 @@ bool EmuThread::ConnectToServer(const wchar_t* pipeName)
 {
     serverConnection = new cucumberDS::ServerConnectionManager(pipeName);
     printf("Awaiting connection to server\n");
-    return server->Initialise();
+    return serverConnection->Initialise();
 }
 
 void EmuThread::run()
