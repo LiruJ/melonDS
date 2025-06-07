@@ -3,12 +3,12 @@
 #include "PipeMessage.h"
 #include "FrameOutputMessage.h"
 
-ServerConnectionManager::ServerConnectionManager(const wchar_t* pipeName)
+cucumberDS::ServerConnectionManager::ServerConnectionManager(const wchar_t* pipeName)
 {
-	pipeConnection = new PipeConnection(pipeName);
+    pipeConnection = new cucumberDS::PipeConnection(pipeName);
 }
 
-ServerConnectionManager::~ServerConnectionManager()
+cucumberDS::ServerConnectionManager::~ServerConnectionManager()
 {
     if (pipeConnection)
     {
@@ -24,7 +24,7 @@ ServerConnectionManager::~ServerConnectionManager()
     outputMessages.clear();
 }
 
-bool ServerConnectionManager::Initialise()
+bool cucumberDS::ServerConnectionManager::Initialise()
 {
     while (true)
     {
@@ -46,7 +46,7 @@ bool ServerConnectionManager::Initialise()
     return true;
 }
 
-void ServerConnectionManager::Send()
+void cucumberDS::ServerConnectionManager::Send()
 {
     unsigned int sentDataSize = pipeConnection->SendData();
 
@@ -56,17 +56,17 @@ void ServerConnectionManager::Send()
         value->Reset();
 }
 
-void ServerConnectionManager::initialiseInputMessages()
+void cucumberDS::ServerConnectionManager::initialiseInputMessages()
 {
 }
 
-void ServerConnectionManager::initialiseOutputMessages()
+void cucumberDS::ServerConnectionManager::initialiseOutputMessages()
 {
     FrameOutputMessage* frameOutputMessage = new FrameOutputMessage(pipeConnection);
     addOutputMessage(frameOutputMessage);
 }
 
-unsigned int ServerConnectionManager::calculateOutputBufferSize()
+unsigned int cucumberDS::ServerConnectionManager::calculateOutputBufferSize()
 {
     unsigned int currentSize = 0;
     for (auto const& [key, value] : outputMessages)
