@@ -415,7 +415,7 @@ void EmuThread::run()
 
             if (emuInstance->doAudioSync && !(fastforward || slowmo))
                 emuInstance->audioSync();
-
+            
             double frametimeStep = nlines / (emuInstance->curFPS * 263.0);
 
             if (frametimeStep < 0.001) frametimeStep = 0.001;

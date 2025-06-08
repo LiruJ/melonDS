@@ -14,7 +14,7 @@ namespace cucumberDS
 		unsigned char GetId() const { return id; }
 		bool GetHasData() const { return currentPerFrame > 0; }
 
-		unsigned int CalculateMaximumLength() const { return sizeof(id) + (calculateMaximumContentLength() * maximumPerFrame); };
+		unsigned int CalculateMaximumLength() const { return (sizeof(id) + calculateMaximumContentLength()) * maximumPerFrame; };
 
 		unsigned int Write(unsigned char* buffer, unsigned int size);
 
