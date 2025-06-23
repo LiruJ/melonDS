@@ -14,7 +14,11 @@ namespace cucumberDS
 		unsigned char GetId() const { return id; }
 		bool GetHasData() const { return currentPerFrame > 0; }
 
-		unsigned int CalculateMaximumLength() const { return (sizeof(id) + calculateMaximumContentLength()) * maximumPerFrame; };
+		unsigned int CalculateMaximumLength() const 
+		{
+			// Each message has an id, plus the content, and there should be space for the maximum number of messages per frame.
+			return (sizeof(id) + calculateMaximumContentLengthPerMessage()) * maximumPerFrame; 
+		};
 
 		unsigned int Write(unsigned char* buffer, unsigned int size);
 
@@ -24,7 +28,7 @@ namespace cucumberDS
 	protected:
 		PipeConnection* pipeConnection = nullptr;
 
-		virtual unsigned int calculateMaximumContentLength() const = 0;
+		virtual unsigned int calculateMaximumContentLengthPerMessage() const = 0;
 
 		unsigned char currentPerFrame = 0;
 		unsigned char maximumPerFrame = 0;

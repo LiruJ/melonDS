@@ -14,6 +14,6 @@ namespace cucumberDS
 
 		static unsigned int GetDataSize() { return (256 * 192) * sizeof(unsigned int); }
 	protected:
-		virtual unsigned int calculateMaximumContentLength() const override { return sizeof(unsigned char) + GetDataSize(); }
+		virtual unsigned int calculateMaximumContentLengthPerMessage() const override { return sizeof(unsigned char) + GetDataSize(); }
 	};
 }
