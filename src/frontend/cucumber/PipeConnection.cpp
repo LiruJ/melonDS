@@ -53,13 +53,13 @@ bool cucumberDS::PipeConnection::TryConnect(unsigned long waitTime)
 		return true;
 
 	// Begin waiting. If at any point the pipe becomes available, try connect again.
-	if (WaitNamedPipe(name, waitTime))
+	if (WaitNamedPipeW(name, waitTime))
 	{
 		lastError = tryConnect();
 		return ERROR_SUCCESS == lastError;
 	}
-	else
-		return false;
+	
+	return false;
 }
 
 void cucumberDS::PipeConnection::InitialiseOutputBuffer(unsigned int size)
@@ -112,7 +112,7 @@ unsigned int cucumberDS::PipeConnection::SendData()
 
 unsigned long cucumberDS::PipeConnection::tryConnect()
 {
-	handle = CreateFile(name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	handle = CreateFileW(name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
 	// 
 	if (INVALID_HANDLE_VALUE != handle)
