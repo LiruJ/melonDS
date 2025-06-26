@@ -19,9 +19,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include "glad/glad.h"
 #include "ScreenLayout.h"
-#include "duckstation/gl/context.h"
 
 #include <QWidget>
 #include <QWindow>
@@ -117,14 +115,6 @@ public:
     void saveEnabled(bool enabled);
 
     void toggleFullscreen();
-
-    bool hasOpenGL() { return hasOGL; }
-    GL::Context* getOGLContext();
-    void initOpenGL();
-    void deinitOpenGL();
-    void setGLSwapInterval(int intv);
-    void makeCurrentGL();
-    void drawScreenGL();
 
     bool preloadROMs(QStringList file, QStringList gbafile, bool boot);
     QStringList splitArchivePath(const QString& filename, bool useMemberSyntax);
@@ -235,7 +225,7 @@ private slots:
     void onEmuPause(bool pause);
     void onEmuReset();
 
-    void onUpdateVideoSettings(bool glchange);
+    void onUpdateVideoSettings();
 
     void onFullscreenToggled();
     void onScreenEmphasisToggled();
@@ -259,8 +249,6 @@ private:
     bool lanWarning(bool host);
 
     bool showOSD;
-
-    bool hasOGL;
 
     bool pauseOnLostFocus;
     bool pausedManually;

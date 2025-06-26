@@ -49,8 +49,6 @@
 #include "DSi.h"
 #include "DSi_I2C.h"
 #include "GPU3D_Soft.h"
-#include "GPU3D_OpenGL.h"
-#include "GPU3D_Compute.h"
 
 #include "cucumber/MessageHeaderData.h"
 #include "cucumber/MemoryReadRequestMessage.h"
@@ -145,19 +143,6 @@ void EmuThread::run()
 
 	//videoSettingsDirty = false;
 
-	if (emuInstance->usesOpenGL())
-	{
-		emuInstance->initOpenGL(0);
-
-		useOpenGL = true;
-		videoRenderer = globalCfg.GetInt("3D.Renderer");
-	}
-	else
-	{
-		useOpenGL = false;
-		videoRenderer = 0;
-	}
-
 	//updateRenderer();
 	videoSettingsDirty = true;
 
@@ -219,24 +204,10 @@ void EmuThread::run()
 				}
 			}
 
-			if (useOpenGL)
-				emuInstance->makeCurrentGL();
-
 			// update render settings if needed
 			if (videoSettingsDirty)
 			{
 				emuInstance->renderLock.lock();
-				if (useOpenGL)
-				{
-					emuInstance->setVSyncGL(true);
-					videoRenderer = globalCfg.GetInt("3D.Renderer");
-				}
-#ifdef OGLRENDERER_ENABLED
-				else
-#endif
-				{
-					videoRenderer = 0;
-				}
 
 				updateRenderer();
 
@@ -325,17 +296,9 @@ void EmuThread::run()
 			if (emuInstance->firmwareSave)
 				emuInstance->firmwareSave->CheckFlush();
 
-			if (!useOpenGL)
-			{
-				frontBufferLock.lock();
-				frontBuffer = emuInstance->nds->GPU.FrontBuffer;
-				frontBufferLock.unlock();
-			}
-			else
-			{
-				frontBuffer = emuInstance->nds->GPU.FrontBuffer;
-				emuInstance->drawScreenGL();
-			}
+			frontBufferLock.lock();
+			frontBuffer = emuInstance->nds->GPU.FrontBuffer;
+			frontBufferLock.unlock();
 
 			cucumberDS::FrameReadRequestMessage* frameRequest =
 				(cucumberDS::FrameReadRequestMessage*)serverConnection->GetPipeConnection()->GetProtocol()->GetInputMessage(cucumberDS::FrameReadRequestMessage::Id);
@@ -370,7 +333,7 @@ void EmuThread::run()
 #endif // MELONCAP
 
 			winUpdateCount++;
-			if (winUpdateCount >= winUpdateFreq && !useOpenGL)
+			if (winUpdateCount >= winUpdateFreq)
 			{
 				emit windowUpdate();
 				winUpdateCount = 0;
@@ -381,19 +344,6 @@ void EmuThread::run()
 
 			bool enablefastforward = emuInstance->hotkeyDown(HK_FastForward) | emuInstance->fastForwardToggled;
 			bool enableslowmo = emuInstance->hotkeyDown(HK_SlowMo) | emuInstance->slowmoToggled;
-
-			if (useOpenGL)
-			{
-				// when using OpenGL: when toggling fast-forward or slowmo, change the vsync interval
-				if ((enablefastforward || enableslowmo) && !(fastforward || slowmo))
-				{
-					emuInstance->setVSyncGL(false);
-				}
-				else if (!(enablefastforward || enableslowmo) && (fastforward || slowmo))
-				{
-					emuInstance->setVSyncGL(true);
-				}
-			}
 
 			fastforward = enablefastforward;
 			slowmo = enableslowmo;
@@ -473,11 +423,6 @@ void EmuThread::run()
 			changeWindowTitle(melontitle);
 
 			SDL_Delay(75);
-
-			if (useOpenGL)
-			{
-				emuInstance->drawScreenGL();
-			}
 		}
 
 		cucumberDS::MemoryReadRequestMessage* memoryRequest =
@@ -602,17 +547,6 @@ void EmuThread::handleMessages()
 			emuInstance->audioEnable();
 			emit windowEmuReset();
 			emuInstance->osdAddMessage(0, "Reset");
-			break;
-
-		case msg_InitGL:
-			emuInstance->initOpenGL(msg.param.value<int>());
-			useOpenGL = true;
-			break;
-
-		case msg_DeInitGL:
-			emuInstance->deinitOpenGL(msg.param.value<int>());
-			if (msg.param.value<int>() == 0)
-				useOpenGL = false;
 			break;
 
 		case msg_BootROM:
@@ -886,44 +820,16 @@ void EmuThread::enableCheats(bool enable)
 
 void EmuThread::updateRenderer()
 {
-	if (videoRenderer != lastVideoRenderer)
+	if (!videoSettingsInitialised)
 	{
-		switch (videoRenderer)
-		{
-		case renderer3D_Software:
-			emuInstance->nds->GPU.SetRenderer3D(std::make_unique<SoftRenderer>());
-			break;
-		case renderer3D_OpenGL:
-			emuInstance->nds->GPU.SetRenderer3D(GLRenderer::New());
-			break;
-		case renderer3D_OpenGLCompute:
-			emuInstance->nds->GPU.SetRenderer3D(ComputeRenderer::New());
-			break;
-		default: __builtin_unreachable();
-		}
+		emuInstance->nds->GPU.SetRenderer3D(std::make_unique<SoftRenderer>());
+		videoSettingsInitialised = true;
 	}
-	lastVideoRenderer = videoRenderer;
 
 	auto& cfg = emuInstance->getGlobalConfig();
-	switch (videoRenderer)
-	{
-	case renderer3D_Software:
-		static_cast<SoftRenderer&>(emuInstance->nds->GPU.GetRenderer3D()).SetThreaded(
-			cfg.GetBool("3D.Soft.Threaded"),
-			emuInstance->nds->GPU);
-		break;
-	case renderer3D_OpenGL:
-		static_cast<GLRenderer&>(emuInstance->nds->GPU.GetRenderer3D()).SetRenderSettings(
-			cfg.GetBool("3D.GL.BetterPolygons"),
-			cfg.GetInt("3D.GL.ScaleFactor"));
-		break;
-	case renderer3D_OpenGLCompute:
-		static_cast<ComputeRenderer&>(emuInstance->nds->GPU.GetRenderer3D()).SetRenderSettings(
-			cfg.GetInt("3D.GL.ScaleFactor"),
-			cfg.GetBool("3D.GL.HiresCoordinates"));
-		break;
-	default: __builtin_unreachable();
-	}
+	static_cast<SoftRenderer&>(emuInstance->nds->GPU.GetRenderer3D()).SetThreaded(
+		cfg.GetBool("3D.Soft.Threaded"),
+		emuInstance->nds->GPU);
 }
 
 void EmuThread::compileShaders()

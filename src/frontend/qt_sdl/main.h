@@ -19,8 +19,6 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include "glad/glad.h"
-
 #include <QApplication>
 #include <QEvent>
 #include <QElapsedTimer>

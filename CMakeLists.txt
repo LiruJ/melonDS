@@ -65,7 +65,6 @@ detect_architecture("__aarch64__" ARM64)
 cmake_dependent_option(ENABLE_JIT "Enable JIT recompiler" ON
     "ARCHITECTURE STREQUAL x86_64 OR ARCHITECTURE STREQUAL ARM64" OFF)
 cmake_dependent_option(ENABLE_JIT_PROFILING "Enable JIT profiling with VTune" OFF "ENABLE_JIT" OFF)
-option(ENABLE_OGLRENDERER "Enable OpenGL renderer" ON)
 
 check_ipo_supported(RESULT IPO_SUPPORTED)
 cmake_dependent_option(ENABLE_LTO_RELEASE "Enable link-time optimizations for release builds" ON "IPO_SUPPORTED" OFF)

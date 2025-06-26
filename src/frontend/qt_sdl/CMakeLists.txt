@@ -67,9 +67,6 @@ set(SOURCES_QT_SDL
     ../ScreenLayout.cpp
     ../mic_blow.h
 
-    ../glad/glad.c
-    ../duckstation/gl/context.cpp
-
     ${CMAKE_SOURCE_DIR}/res/melon.qrc
 
     CLI.h
@@ -116,14 +113,6 @@ add_subdirectory("../../net"
 target_link_libraries(melonDS PRIVATE net-utils)
 
 if (WIN32)
-    target_link_libraries(melonDS PUBLIC opengl32)
-
-    target_sources(melonDS PRIVATE
-        ../duckstation/gl/context_wgl.cpp
-
-        ../glad/glad_wgl.c
-    )
-
     if (MINGW AND CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
         set_property(TARGET melonDS PROPERTY AUTORCC_OPTIONS "--no-zstd")
     endif()
@@ -132,15 +121,6 @@ elseif (APPLE)
         find_library(COCOA_LIB Cocoa)
         target_link_libraries(melonDS PRIVATE ${COCOA_LIB})
     endif()
-    find_library(OPENGL_LIB OpenGL)
-    target_link_libraries(melonDS PRIVATE ${OPENGL_LIB})
-    target_sources(melonDS PRIVATE
-        ../duckstation/gl/context_agl.mm
-    )
-    set_source_files_properties(
-        ../duckstation/gl/context_agl.mm
-        PROPERTIES COMPILE_OPTIONS "-Wno-deprecated-declarations"
-    )
 else()
     find_package(X11 REQUIRED)
     find_package(EGL REQUIRED)
@@ -271,12 +251,4 @@ if (UNIX AND NOT APPLE)
     endif()
 elseif(APPLE)
     install(TARGETS melonDS BUNDLE DESTINATION "${CMAKE_INSTALL_PREFIX}/Applications")
-endif()
-
-if (ENABLE_OGLRENDERER)
-    set(MELONDS_GL_HEADER \"frontend/glad/glad.h\" CACHE STRING "Path to a header that contains OpenGL function and type declarations.")
-
-    target_compile_definitions(melonDS PUBLIC OGLRENDERER_ENABLED)
-    target_compile_definitions(melonDS PUBLIC MELONDS_GL_HEADER=${MELONDS_GL_HEADER})
-    target_compile_definitions(core PUBLIC MELONDS_GL_HEADER=${MELONDS_GL_HEADER})
 endif()

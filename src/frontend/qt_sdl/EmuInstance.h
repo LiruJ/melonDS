@@ -70,10 +70,6 @@ enum
 enum
 {
     renderer3D_Software = 0,
-#ifdef OGLRENDERER_ENABLED
-    renderer3D_OpenGL,
-    renderer3D_OpenGLCompute,
-#endif
     renderer3D_Max,
 };
 
@@ -116,13 +112,6 @@ public:
 
     bool emuIsActive();
     void emuStop(melonDS::Platform::StopReason reason);
-
-    bool usesOpenGL();
-    void initOpenGL(int win);
-    void deinitOpenGL(int win);
-    void setVSyncGL(bool vsync);
-    void makeCurrentGL();
-    void drawScreenGL();
 
     // return: empty string = setup OK, non-empty = error message
     QString verifySetup();

@@ -224,10 +224,6 @@ void EmuInstance::createWindow(int id)
 
     emuThread->attachWindow(win);
 
-    // if creating a secondary window, we may need to initialize its OpenGL context here
-    if (win->hasOpenGL() && (id != 0))
-        emuThread->initContext(id);
-
     bool enable = (numWindows < kMaxWindows);
     doOnAllWindows([=](MainWindow* win)
     {
@@ -241,9 +237,6 @@ void EmuInstance::deleteWindow(int id, bool close)
 
     MainWindow* win = windowList[id];
     if (!win) return;
-
-    if (win->hasOpenGL())
-        emuThread->deinitContext(id);
 
     emuThread->detachWindow(win);
 
@@ -376,59 +369,6 @@ void EmuInstance::emuStop(StopReason reason)
             break;
     }
 }
-
-
-bool EmuInstance::usesOpenGL()
-{
-    return globalCfg.GetBool("Screen.UseGL") ||
-           (globalCfg.GetInt("3D.Renderer") != renderer3D_Software);
-}
-
-void EmuInstance::initOpenGL(int win)
-{
-    if (windowList[win])
-        windowList[win]->initOpenGL();
-
-    setVSyncGL(true);
-}
-
-void EmuInstance::deinitOpenGL(int win)
-{
-    if (windowList[win])
-        windowList[win]->deinitOpenGL();
-}
-
-void EmuInstance::setVSyncGL(bool vsync)
-{
-    int intv;
-
-    vsync = vsync && globalCfg.GetBool("Screen.VSync");
-    if (vsync)
-        intv = globalCfg.GetInt("Screen.VSyncInterval");
-    else
-        intv = 0;
-
-    for (int i = 0; i < kMaxWindows; i++)
-    {
-        if (windowList[i])
-            windowList[i]->setGLSwapInterval(intv);
-    }
-}
-
-void EmuInstance::makeCurrentGL()
-{
-    mainWindow->makeCurrentGL();
-}
-
-void EmuInstance::drawScreenGL()
-{
-    for (int i = 0; i < kMaxWindows; i++)
-    {
-        if (windowList[i])
-            windowList[i]->drawScreenGL();
-    }
-}
-
 
 int EmuInstance::lastSep(const std::string& path)
 {

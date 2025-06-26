@@ -42,7 +42,6 @@ class NDS;
 
 class EmuInstance;
 class MainWindow;
-class ScreenPanelGL;
 
 class EmuThread : public QThread
 {
@@ -136,7 +135,7 @@ public:
     void initContext(int win);
     void deinitContext(int win);
     void updateVideoSettings() { videoSettingsDirty = true; }
-    void updateVideoRenderer() { videoSettingsDirty = true; lastVideoRenderer = -1; }
+    void updateVideoRenderer() { videoSettingsDirty = true; }
 
     int frontBuffer = 0;
     QMutex frontBufferLock;
@@ -196,13 +195,10 @@ private:
 
     int autoScreenSizing;
 
-    int lastVideoRenderer = -1;
-
     double perfCountsSec;
 
-    bool useOpenGL;
-    int videoRenderer;
     bool videoSettingsDirty;
+    bool videoSettingsInitialised = false;
 };
 
 #endif // EMUTHREAD_H

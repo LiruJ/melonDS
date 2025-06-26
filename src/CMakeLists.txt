@@ -76,20 +76,6 @@ if (ENABLE_GDBSTUB)
     )
 endif()
 
-if (ENABLE_OGLRENDERER)
-    target_sources(core PRIVATE
-        GPU_OpenGL.cpp
-        GPU_OpenGL_shaders.h
-        GPU3D_OpenGL.cpp
-        GPU3D_Compute.cpp
-        GPU3D_TexcacheOpenGL.cpp
-        GPU3D_TexcacheOpenGL.h
-        GPU3D_OpenGL_shaders.h
-        OpenGLSupport.cpp)
-
-    target_compile_definitions(core PUBLIC OGLRENDERER_ENABLED)
-endif()
-
 if (ENABLE_JIT)
     enable_language(ASM)
 

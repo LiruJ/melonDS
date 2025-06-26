@@ -34,8 +34,6 @@ public:
     explicit VideoSettingsDialog(QWidget* parent);
     ~VideoSettingsDialog();
 
-    bool UsesGL();
-
     static VideoSettingsDialog* currentDlg;
     static VideoSettingsDialog* openDlg(QWidget* parent)
     {
@@ -55,24 +53,19 @@ public:
     }
 
 signals:
-    void updateVideoSettings(bool glchange);
+    void updateVideoSettings();
 
 private slots:
     void on_VideoSettingsDialog_accepted();
     void on_VideoSettingsDialog_rejected();
 
     void onChange3DRenderer(int renderer);
-    void on_cbGLDisplay_stateChanged(int state);
     void on_cbVSync_stateChanged(int state);
     void on_sbVSyncInterval_valueChanged(int val);
 
-    void on_cbxGLResolution_currentIndexChanged(int idx);
-    void on_cbBetterPolygons_stateChanged(int state);
-    void on_cbxComputeHiResCoords_stateChanged(int state);
-
     void on_cbSoftwareThreaded_stateChanged(int state);
 private:
-    void setVsyncControlEnable(bool hasOGL);
+    void setVsyncControlEnable();
     void setEnabled();
 
     Ui::VideoSettingsDialog* ui;
@@ -81,13 +74,9 @@ private:
     QButtonGroup* grp3DRenderer;
 
     int oldRenderer;
-    int oldGLDisplay;
     int oldVSync;
     int oldVSyncInterval;
     int oldSoftThreaded;
-    int oldGLScale;
-    int oldGLBetterPolygons;
-    int oldHiresCoordinates;
 };
 
 #endif // VIDEOSETTINGSDIALOG_H

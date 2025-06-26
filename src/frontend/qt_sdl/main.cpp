@@ -49,9 +49,6 @@
 
 #include <SDL2/SDL.h>
 
-#include "OpenGLSupport.h"
-#include "duckstation/gl/context.h"
-
 #include "main.h"
 #include "version.h"
 
