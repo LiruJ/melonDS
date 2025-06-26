@@ -219,43 +219,6 @@ void EmuThread::run()
 				}
 			}
 
-			if (emuInstance->nds->ConsoleType == 1)
-			{
-				DSi* dsi = static_cast<DSi*>(emuInstance->nds);
-				double currentTime = SDL_GetPerformanceCounter() * perfCountsSec;
-
-				// Handle power button
-				if (emuInstance->hotkeyDown(HK_PowerButton))
-				{
-					dsi->I2C.GetBPTWL()->SetPowerButtonHeld(currentTime);
-				}
-				else if (emuInstance->hotkeyReleased(HK_PowerButton))
-				{
-					dsi->I2C.GetBPTWL()->SetPowerButtonReleased(currentTime);
-				}
-
-				// Handle volume buttons
-				if (emuInstance->hotkeyDown(HK_VolumeUp))
-				{
-					dsi->I2C.GetBPTWL()->SetVolumeSwitchHeld(DSi_BPTWL::volumeKey_Up);
-				}
-				else if (emuInstance->hotkeyReleased(HK_VolumeUp))
-				{
-					dsi->I2C.GetBPTWL()->SetVolumeSwitchReleased(DSi_BPTWL::volumeKey_Up);
-				}
-
-				if (emuInstance->hotkeyDown(HK_VolumeDown))
-				{
-					dsi->I2C.GetBPTWL()->SetVolumeSwitchHeld(DSi_BPTWL::volumeKey_Down);
-				}
-				else if (emuInstance->hotkeyReleased(HK_VolumeDown))
-				{
-					dsi->I2C.GetBPTWL()->SetVolumeSwitchReleased(DSi_BPTWL::volumeKey_Down);
-				}
-
-				dsi->I2C.GetBPTWL()->ProcessVolumeSwitchInput(currentTime);
-			}
-
 			if (useOpenGL)
 				emuInstance->makeCurrentGL();
 
@@ -439,19 +402,6 @@ void EmuThread::run()
 			else if (fastforward) emuInstance->curFPS = emuInstance->fastForwardFPS;
 			else if (!emuInstance->doLimitFPS && !emuInstance->doAudioSync) emuInstance->curFPS = 1000.0;
 			else emuInstance->curFPS = emuInstance->targetFPS;
-
-			if (emuInstance->audioDSiVolumeSync && emuInstance->nds->ConsoleType == 1)
-			{
-				DSi* dsi = static_cast<DSi*>(emuInstance->nds);
-				u8 volumeLevel = dsi->I2C.GetBPTWL()->GetVolumeLevel();
-				if (volumeLevel != dsiVolumeLevel)
-				{
-					dsiVolumeLevel = volumeLevel;
-					emit syncVolumeLevel();
-				}
-
-				emuInstance->audioVolume = volumeLevel * (256.0 / 31.0);
-			}
 
 			if (emuInstance->doAudioSync && !(fastforward || slowmo))
 				emuInstance->audioSync();
