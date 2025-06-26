@@ -118,7 +118,7 @@ void NetInit()
 }
 
 
-bool createEmuInstance()
+bool createEmuInstance(const wchar_t* pipeName)
 {
 	int id = -1;
 	for (int i = 0; i < kMaxEmuInstances; i++)
@@ -133,7 +133,7 @@ bool createEmuInstance()
 	if (id == -1)
 		return false;
 
-	auto inst = new EmuInstance(id);
+	auto inst = new EmuInstance(id, pipeName);
 	emuInstances[id] = inst;
 
 	return true;
@@ -302,23 +302,23 @@ int main(int argc, char** argv)
 
 	SDL_SetHint(SDL_HINT_APP_NAME, "melonDS");
 
-    if (SDL_Init(SDL_INIT_HAPTIC) < 0)
-    {
-        printf("SDL couldn't init rumble\n");
-    }
-    if (SDL_Init(SDL_INIT_JOYSTICK) < 0)
-    {
-        printf("SDL couldn't init joystick\n");
-    }
-    if (SDL_Init(SDL_INIT_SENSOR) < 0)
-    {
-        printf("SDL couldn't init motion sensors\n");
-    }
-    if (SDL_Init(SDL_INIT_AUDIO) < 0)
-    {
-        const char* err = SDL_GetError();
-        QString errorStr = "Failed to initialize SDL. This could indicate an issue with your audio driver.\n\nThe error was: ";
-        errorStr += err;
+	if (SDL_Init(SDL_INIT_HAPTIC) < 0)
+	{
+		printf("SDL couldn't init rumble\n");
+	}
+	if (SDL_Init(SDL_INIT_JOYSTICK) < 0)
+	{
+		printf("SDL couldn't init joystick\n");
+	}
+	if (SDL_Init(SDL_INIT_SENSOR) < 0)
+	{
+		printf("SDL couldn't init motion sensors\n");
+	}
+	if (SDL_Init(SDL_INIT_AUDIO) < 0)
+	{
+		const char* err = SDL_GetError();
+		QString errorStr = "Failed to initialize SDL. This could indicate an issue with your audio driver.\n\nThe error was: ";
+		errorStr += err;
 
 		QMessageBox::critical(nullptr, "melonDS", errorStr);
 		return 1;
@@ -356,9 +356,9 @@ int main(int argc, char** argv)
 
 	NetInit();
 
-	createEmuInstance();
-	if (!emuInstances[0]->ConnectToServer(options->pipeName.toStdWString().c_str()))
+	if (!createEmuInstance(options->pipeName.toStdWString().c_str()))
 		return -420;
+	
 
 	{
 		MainWindow* win = emuInstances[0]->getMainWindow();
@@ -388,8 +388,9 @@ int main(int argc, char** argv)
 			win->toggleFullscreen();
 	}
 
+	printf("Executing\n");
 	int ret = melon.exec();
-
+	printf("AWOOGA\n");
 	delete options;
 
 	// if we get here, all the existing emu instances should have been deleted already

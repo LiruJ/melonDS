@@ -1,39 +1,59 @@
 #pragma once
 
-constexpr auto FRAME_OUTPUT_MESSAGE_ID = 1;
-
 namespace cucumberDS
 {
+	// Forward declarations.
 	class PipeConnection;
+	class BufferReader;
+	class BufferWriter;
 
 	class PipeMessage
 	{
 	public:
-		PipeMessage(PipeConnection* pipeConnection, unsigned char id, unsigned char maximumPerFrame);
+		PipeMessage(PipeConnection* pipeConnection, unsigned char id, unsigned int sizePerMessage, unsigned char maximumPerFrame);
+		virtual ~PipeMessage() {}
 
 		unsigned char GetId() const { return id; }
 		bool GetHasData() const { return currentPerFrame > 0; }
+		unsigned int GetSizePerMessage() const { return sizePerMessage; }
 
-		unsigned int CalculateMaximumLength() const 
-		{
-			// Each message has an id, plus the content, and there should be space for the maximum number of messages per frame.
-			return (sizeof(id) + calculateMaximumContentLengthPerMessage()) * maximumPerFrame; 
-		};
+		unsigned int CalculateContentSizePerMessage() const { return sizePerMessage - sizeof(unsigned char); }
+		unsigned int CalculateSizePerFrame() const { return sizePerMessage * maximumPerFrame; };
 
-		unsigned int Write(unsigned char* buffer, unsigned int size);
+		bool Write(unsigned char* buffer, unsigned int size);
 
-		bool WriteId();
+		bool WriteEmpty();
 
 		virtual void Reset() { currentPerFrame = 0; }
+
+		bool Read(BufferReader* reader)
+		{
+			startReading(reader);
+			read(reader);
+			return stopReading(reader);
+		}
+
+		unsigned int GetCurrentReadSize() const;
+		unsigned int GetCurrentWriteSize() const;
+
+		static PipeMessage* CreateFromReadProtocol(PipeConnection* pipeConnection);
 	protected:
-		PipeConnection* pipeConnection = nullptr;
-
-		virtual unsigned int calculateMaximumContentLengthPerMessage() const = 0;
-
-		unsigned char currentPerFrame = 0;
+		unsigned char id = 255;
+		unsigned int sizePerMessage = 0;
 		unsigned char maximumPerFrame = 0;
 
+		PipeConnection* pipeConnection = nullptr;
+
+		unsigned char currentPerFrame = 0;
+
+		bool startWriting(BufferWriter* writer);
+		bool stopWriting(BufferWriter* writer);
+
+		virtual void read(BufferReader* reader) {}
+
+		void startReading(BufferReader* reader);
+		bool stopReading(BufferReader* reader);
 	private:
-		unsigned char id;
+		unsigned int startReadWritePosition = 0;
 	};
 }

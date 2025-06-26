@@ -1,9 +1,17 @@
 #pragma once
 
+#include "PipeProtocol.h"
+#include "BufferReader.h"
+#include "BufferWriter.h"
+
+// Forward declarations.
 typedef void* HANDLE;
 
 namespace cucumberDS
 {
+	// Forward declarations.
+	class MessageHeaderData;
+
 	class PipeConnection
 	{
 	public:
@@ -12,28 +20,34 @@ namespace cucumberDS
 
 		bool TryConnect(unsigned long waitTime);
 
-		void InitialiseOutputBuffer(unsigned int size);
+		bool ReceiveHandshake();
+		unsigned int ReceiveData(MessageHeaderData* headerData);
+		unsigned int ReceiveDataOfLength(unsigned int size);
+		unsigned int ReceiveDataOfLengthInto(unsigned char* buffer, unsigned int size);
 
-		unsigned int Write(const unsigned char* buffer, unsigned int size);
-		unsigned int Write(unsigned char value);
+		unsigned int SendData(unsigned int currentStep);
 
-		unsigned int SendData();
-
-		unsigned int GetCurrentOutputSize() const { return currentOutputOffset; }
-
+		PipeProtocol* GetProtocol() { return &protocol; }
 		bool GetIsBroken() const { return isBroken; }
 		wchar_t* GetName() const { return name; }
+
+		BufferReader* GetInputReader() { return &inputBuffer; }
+		BufferWriter* GetOutputWriter() { return &outputBuffer; }
+
 	private:
+		PipeProtocol protocol;
+
 		bool isBroken = false;
 		wchar_t* name = nullptr;
 
 		HANDLE handle;
 
-		unsigned int currentOutputOffset = 0;
-		unsigned int maximumOutputBufferSize = 0;
-		unsigned char* outputBuffer = nullptr;
+		BufferReader inputBuffer;
+		BufferWriter outputBuffer;
 
 		unsigned long tryConnect();
 		bool tryInitialise();
+
+		void readReceivedData();
 	};
 }

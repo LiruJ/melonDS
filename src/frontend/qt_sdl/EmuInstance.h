@@ -83,7 +83,7 @@ int getEventKeyVal(QKeyEvent* event);
 class EmuInstance
 {
 public:
-    EmuInstance(int inst);
+    EmuInstance(int inst, const wchar_t* pipeName);
     ~EmuInstance();
 
     bool ConnectToServer(const wchar_t* pipeName);

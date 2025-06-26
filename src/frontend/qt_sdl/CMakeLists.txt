@@ -44,10 +44,25 @@ set(SOURCES_QT_SDL
     ArchiveUtil.h
     ArchiveUtil.cpp
 
-    ../cucumber/ServerConnectionManager.cpp
+    ../cucumber/ServerInstance.cpp
     ../cucumber/PipeConnection.cpp
+    ../cucumber/PipeProtocol.cpp
+    ../cucumber/ByteBuffer.h
+    ../cucumber/BufferWriter.cpp
+    ../cucumber/BufferReader.cpp
+
     ../cucumber/PipeMessage.cpp
-    ../cucumber/FrameOutputMessage.cpp
+    ../cucumber/AcknowledgeMessage.cpp
+
+    ../cucumber/FrameReadRequestMessage.cpp
+    ../cucumber/MemoryReadRequestMessage.cpp
+    ../cucumber/InputRequestMessage.cpp
+
+    ../cucumber/FrameReadResponseMessage.cpp
+
+    ../cucumber/MessageHeaderData.cpp
+    ../cucumber/FrameReadRequestData.h
+    ../cucumber/MemoryReadRequestData.h
 
     ../ScreenLayout.cpp
     ../mic_blow.h

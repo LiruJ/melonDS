@@ -1755,7 +1755,7 @@ void MainWindow::onOpenTitleManager()
 
 void MainWindow::onMPNewInstance()
 {
-    createEmuInstance();
+    createEmuInstance(nullptr);
 }
 
 void MainWindow::onLANStartHost()

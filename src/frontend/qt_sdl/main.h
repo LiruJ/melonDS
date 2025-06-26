@@ -54,7 +54,7 @@ extern QString emuDirectory;
 
 extern QElapsedTimer sysTimer;
 
-bool createEmuInstance();
+bool createEmuInstance(const wchar_t* pipeName);
 void deleteEmuInstance(int id);
 void deleteAllEmuInstances(int first = 0);
 int numEmuInstances();

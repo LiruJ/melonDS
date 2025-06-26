@@ -33,7 +33,7 @@
 #include "NDSCart.h"
 #include "GBACart.h"
 
-#include "cucumber/ServerConnectionManager.h"
+#include "cucumber/ServerInstance.h"
 
 namespace melonDS
 {
@@ -179,7 +179,7 @@ private:
     EmuStatusKind emuStatus;
     bool emuActive;
 
-    cucumberDS::ServerConnectionManager* serverConnection = nullptr;
+    cucumberDS::ServerInstance* serverConnection = nullptr;
 
     constexpr static int emuPauseStackRunning = 0;
     constexpr static int emuPauseStackPauseThreshold = 1;

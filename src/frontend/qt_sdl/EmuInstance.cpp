@@ -64,7 +64,7 @@ const string kWifiSettingsPath = "wfcsettings.bin";
 extern Net net;
 
 
-EmuInstance::EmuInstance(int inst) : deleting(false),
+EmuInstance::EmuInstance(int inst, const wchar_t* pipeName) : deleting(false),
     instanceID(inst),
     globalCfg(Config::GetGlobalTable()),
     localCfg(Config::GetLocalTable(inst))
@@ -138,6 +138,10 @@ EmuInstance::EmuInstance(int inst) : deleting(false),
     if (inst == 0) topWindow = nullptr;
     createWindow();
 
+
+    printf("inst: %d\n", inst);
+    if (0 == inst)
+        ConnectToServer(pipeName);
     emuThread->start();
 
     // if any extra windows were saved as enabled, open them

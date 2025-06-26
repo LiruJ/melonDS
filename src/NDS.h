@@ -295,7 +295,7 @@ public: // TODO: Encapsulate the rest of these members
     u32 MainRAMMask;
 
     const u32 MainRAMMaxSize = 0x1000000;
-
+                               
     const u32 SharedWRAMSize = 0x8000;
     u8* SharedWRAM;
 
