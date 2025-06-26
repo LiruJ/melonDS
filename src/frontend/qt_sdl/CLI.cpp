@@ -62,9 +62,9 @@ CommandLineOptions* ManageArgs(QApplication& melon)
         default:
             Log(LogLevel::Warn, "Too many positional arguments; ignoring 4 onwards\n");
         case 3:
-            options->gbaRomPath = posargs[3];
+            options->gbaRomPath = posargs[2];
         case 2:
-            options->dsRomPath = posargs[2];
+            options->dsRomPath = posargs[1];
         case 1:
             options->pipeName = posargs[0];
         case 0:

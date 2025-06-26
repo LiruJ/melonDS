@@ -355,7 +355,7 @@ int main(int argc, char** argv)
 
 	if (!createEmuInstance(options->pipeName.toStdWString().c_str()))
 		return -420;
-	
+
 
 	{
 		MainWindow* win = emuInstances[0]->getMainWindow();
@@ -385,9 +385,7 @@ int main(int argc, char** argv)
 			win->toggleFullscreen();
 	}
 
-	printf("Executing\n");
 	int ret = melon.exec();
-	printf("AWOOGA\n");
 	delete options;
 
 	// if we get here, all the existing emu instances should have been deleted already
